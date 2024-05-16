@@ -11,7 +11,6 @@ import { useSearchParams } from "next/navigation";
 import { getAudio, playAudio } from "../lib/audio_utils";
 import { HomeRightSectionComponent } from "../components/home/right_section";
 import { HomeFormComponent } from "../components/home/form";
-
 export default function Page() {
 	const [audioQueue, setAudioQueue] = useState<
 		{ audio_path: string; chunk: string }[]
@@ -45,59 +44,38 @@ export default function Page() {
 		setIsLoading(true);
 		const url = "/api/admin/lesson";
 		setIsLoading(true);
-		axios
-			.get(url, { params: { id: params.get("id") } })
-			.then((response) => {
-				if (response.data.data) {
-					const data = {
-						subject: response.data.data?.subject,
-						topic: response.data.data?.topic,
-						lesson_title: response.data.data?.title,
-						summary: response.data.data?.summary,
-						context: response.data.data?.context,
-					};
-					beginChat(data);
-				}
-			})
-			.catch((error) => {
-				setIsLoading(false);
-				console.log("error 57", error);
-				console.log(
-					"========================================================="
-				);
-			});
-	};
+		// axios
+		// 	.get(url, { params: { id: params.get("id") } })
+		// 	.then((response) => {
+		// 		if (response.data.data) {
+		// 			const data = {
+		// 				subject: response.data.data?.subject,
+		// 				topic: response.data.data?.topic,
+		// 				lesson_title: response.data.data?.title,
+		// 				summary: response.data.data?.summary,
+		// 				context: response.data.data?.context,
+		// 			};
+		// 			beginChat(data);
+		// 		}
+		// 	})
+		// 	.catch((error) => {
+		// 		setIsLoading(false);
+		// 		console.log("error 57", error);
+		// 		console.log(
+		// 			"========================================================="
+		// 		);
+		// 	});
 
-	const beginChat = async (data: any) => {
-		const url = "api/admin/begin_chat";
-		setIsLoading(true);
-		try {
-			const response = await axios.post(url, data, { headers });
-			const text = response.data.data.message;
-			await handleAudio(text);
-		} catch (error) {
-			console.log("error", error);
-			console.log("----------------------------------------");
-		}
+		//test
+		const data = {
+			subject: "math",
+			topic: "Fraction",
+			lesson_title: "Fraction Foundation",
+			summary: "Fraction Foundation",
+			context: "Hello, I am JianHao Tan, your math tutor for today. In this lesson, we will explore the basics of fractions. A fraction represents a part of a whole. It consists of a numerator (the top number) and a denominator (the bottom number). For example, in the fraction 1/2, 1 is the numerator and 2 is the denominator, meaning one part out of two equal parts. Let's start with a simple problem: What is 1/2 of 4?"
+		};
+		beginChat(data);
 	};
-
-	const sendChat = (message: any) => {
-		const url = "api/admin/chat?message=" + message;
-		setIsLoading(true);
-		axios
-			.post(url, { headers: headers })
-			.then(async (response) => {
-				if (response?.data) {
-					const text = response.data.data.message;
-					await handleAudio(text);
-				}
-			})
-			.catch((error) => {
-				setIsLoading(false);
-				console.log(error);
-			});
-	};
-
 	const handleAudio = async (text: string) => {
 		if (audioLessonEnabled) {
 
@@ -125,6 +103,64 @@ export default function Page() {
 			setIsLoading(false);
 		}
 	};
+	const beginChat = async (data: any) => {
+		const url = "http://127.0.0.1:8000/begin_chat ";
+		setIsLoading(true);
+		try {
+			const response = await axios.post(url, data, { headers });
+			console.log(response)
+			const text = response.data.message;
+			await handleAudio(text);
+		} catch (error) {
+			console.log("error", error);
+			console.log("----------------------------------------");
+		}
+	};
+	const isImage = (value: string | null) => {
+		if (!value) return false;
+		const imageRegex = /\.(png|jpg|jpeg)$/i;
+		return imageRegex.test(value);
+	};
+	const sendChat = async (message: any) => {
+		const checkImage = isImage(message)
+		if (checkImage) {
+			const formData = new FormData();
+			formData.append('image', message); // `message` should be the image filename
+			formData.append('conversation_history', JSON.stringify(chatLog));
+			console.log(message)
+			try {
+				const response = await axios.post('http://127.0.0.1:8000/sendImage', formData, {
+					headers: {
+						'Content-Type': 'multipart/form-data',
+					},
+				});
+		
+				if (response.data) {
+					const text = response.data.response;
+					await handleAudio(text);
+				}
+			} catch (error) {
+				console.error('Error uploading image:', error);
+			}
+		}
+		const url = "http://127.0.0.1:8000/chat?message=" + message;
+		setIsLoading(true);
+		axios
+			.post(url, { headers: headers })
+			.then(async (response) => {
+				console.log("chat response", response)
+				if (response?.data) {
+					const text = response.data.message;
+					await handleAudio(text);
+				}
+			})
+			.catch((error) => {
+				setIsLoading(false);
+				console.log(error);
+			});
+	};
+
+	
 
 	// plays audio.
 	useEffect(() => {
@@ -217,6 +253,7 @@ export default function Page() {
 									</div>
 								</div>
 							) : null}
+
 							<HomeFormComponent audioLessonEnabled={audioLessonEnabled} disabled={isLoading} handleSubmit={handleSubmit} inputValue={inputValue} setInputValue={setInputValue} />
 						</div>
 					</div>

@@ -2,7 +2,7 @@
 export const getAudio = async (text: string) => {
   try {
     console.log("getting audio --------------------------");
-    const response = await fetch("/api/audio", {
+    const response = await fetch("http://127.0.0.1:8000/audio", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),

@@ -1,9 +1,10 @@
 "use client"
 
 import 'regenerator-runtime'
-
+import { useRef,useState } from 'react';
 import { MicrophoneComponent } from "../audio/microphone";
-
+import pin from "./pin.png"
+import Image from 'next/image';
 interface HomeFormComponentProps {
 	handleSubmit: () => void;
 	inputValue: string;
@@ -19,16 +20,69 @@ export function HomeFormComponent({
 	audioLessonEnabled,
 	setInputValue,
 }: HomeFormComponentProps) {
+	const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
 	const keyDownEvent = (event: React.KeyboardEvent<HTMLInputElement>) => {
 		if (event.key == 'Enter') {
 			handleSubmit()
 		}
 	}
+	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	const handleImageClick = () => {
+		if (fileInputRef.current) {
+			fileInputRef.current.click();
+		}
+	};
+
+	const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.target?.files?.[0];
+		if (file) {
+			const reader = new FileReader();
+			reader.onloadend = () => {
+				const base64String = reader.result as string;
+				setSelectedImage(file.name);
+				setInputValue(file.name); // Store the image base64 string in inputValue
+			};
+			reader.readAsDataURL(file);
+
+			await handleImageUpload(file); // Upload the image immediately
+		}
+	};
+
+	const handleImageUpload = async (file: File) => {
+		const formData = new FormData();
+		formData.append('file', file);
+
+		try {
+			const response = await fetch('http://127.0.0.1:8000/upload', {
+				method: 'POST',
+				body: formData,
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to upload image');
+			}
+
+			const data = await response.json();
+			console.log('Image uploaded successfully:', data);
+		} catch (error) {
+			console.error('Error uploading image:', error);
+		}
+	};
 
 	return (
 		<div className="fixed bottom-1 w-[76%] flex-none p-6">
 			<div className="flex rounded border bg-white border-red-100">
+            <Image src={pin} style={{height:"2rem",margin:"auto",cursor:"pointer"}} width={30} alt="File Pin" className="mr-3"	onClick={handleImageClick} />
+				
+				<input
+					type="file"
+					accept="image/*"
+					style={{ display: 'none' }}
+					ref={fileInputRef}
+					onChange={handleImageChange}
+				/>
 				<input
 					disabled={disabled}
 					type="text"
