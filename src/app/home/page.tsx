@@ -104,7 +104,7 @@ export default function Page() {
 		}
 	};
 	const beginChat = async (data: any) => {
-		const url = "http://127.0.0.1:8000/begin_chat ";
+		const url = "https://ai-tutor-backend.vercel.app/begin_chat ";
 		setIsLoading(true);
 		try {
 			const response = await axios.post(url, data, { headers });
@@ -129,7 +129,7 @@ export default function Page() {
 			formData.append('conversation_history', JSON.stringify(chatLog));
 			console.log(message)
 			try {
-				const response = await axios.post('http://127.0.0.1:8000/sendImage', formData, {
+				const response = await axios.post('https://ai-tutor-backend.vercel.app/sendImage', formData, {
 					headers: {
 						'Content-Type': 'multipart/form-data',
 					},
@@ -143,7 +143,7 @@ export default function Page() {
 				console.error('Error uploading image:', error);
 			}
 		}
-		const url = "http://127.0.0.1:8000/chat?message=" + message;
+		const url = "https://ai-tutor-backend.vercel.app/chat?message=" + message;
 		setIsLoading(true);
 		axios
 			.post(url, { headers: headers })
